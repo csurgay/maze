@@ -100,7 +100,7 @@ function process() {
     }
     else if (dir0.length==0) {
         do {
-            var o=opt.pop();
+            var o=opt.shift();
             if (o) { x=o[0]; y=o[1]; d=o[2]; }
         } while (maze.m[x+d[0]][y+d[1]]!='.' && !mazeFull() && o!=null)
     }
