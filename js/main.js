@@ -4,9 +4,11 @@ canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 ctx.translate(0.5,0.5);
 ctx.lineWidth=3;
-const d=30, dx=12, dy=8;
+const d=30, dx=20, dy=15;
 const maze=new Maze();
-const grid=[], opt=[], path=[];
+const grid=[], opt=[], path=[], 
+    rands=[1, 1, 1, 1, 0, 2, 1, 1, 0, 2, 1, 0, 1, 0, 0, 2, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 2, 0, 1, 1, 1, 0, 0, 0, 1, 2, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 2, 2, 2, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+var ptrRands=0;
 
 for (let i=0; i<dx; i++) {
     for (let j=0; j<dy; j++) {
@@ -83,9 +85,12 @@ function process() {
             dir0.push(d);
         }
     });
-    var d=dir0[Math.floor(dir0.length*Math.random())];
+    var r=Math.floor(dir0.length*Math.random());
+    rands.push(r);
+ //   r=rands[ptrRands++];
+    var d=dir0[r];
     if (dir0.length>=1) {
-        dir0.splice(d,1);
+        dir0.splice(r,1);
         dir0.forEach(o=>opt.push([x,y,o]));
         var p1=new Point(x,y);
         x=x+d[0]; y=y+d[1];
@@ -97,12 +102,11 @@ function process() {
         do {
             var o=opt.pop();
             if (o) { x=o[0]; y=o[1]; d=o[2]; }
-            else { alert("o=null") };
         } while (maze.m[x+d[0]][y+d[1]]!='.' && !mazeFull() && o!=null)
     }
 }
 
-var ms=0, lastFrame=0; delay=100;
+var ms=0, lastFrame=0; delay=0;
 var x=0, y=0;
 
 function animate() {
@@ -120,6 +124,9 @@ function animate() {
     if (mazeFull()) alert("Complete");
     else if (opt.length==0) alert("opt emty");
     else requestAnimationFrame(animate);
+    if (!mazeFull() && opt.length==0) {
+        console.log(rands);
+    }
 }
 
 animate();
