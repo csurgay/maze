@@ -22,3 +22,11 @@ class Maze {
         }
     }
 }
+
+function colorTest() {
+    colors.forEach(c=>{
+        ctx.fillStyle=c;
+        ctx.fillRect(0,0,500,500);
+        console.log(c);
+    });
+}
