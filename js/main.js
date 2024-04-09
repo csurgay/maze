@@ -1,10 +1,17 @@
 const canvas=document.getElementById("canvas");
 const ctx=canvas.getContext("2d");
+const colors=["red","green","blue","cyan","magena","yellow","pink",
+    "orange","navy","plum","purple","Salmon","brown","yellowgreen",
+    "wheat","tan","steelblue","gray","skyblue","orangered","olive",
+    "maroon","lime","khaki","indigo","indianred","gold","crimson",
+    "chocolate","azure","aqua","aquamarine","biege"
+];
+var ptrColor=0;
 canvas.width=window.innerWidth; 
 canvas.height=window.innerHeight;
-ctx.translate(0.5,0.5);
+ctx.translate(1.5,1.5);
 ctx.lineWidth=3;
-const d=30, dx=20, dy=15;
+const d=10, dx=100, dy=60;
 const maze=new Maze();
 const grid=[], opt=[], path=[], rands=[];
 var ptrRands=0;
@@ -43,12 +50,13 @@ function drawGrid() {
 }
 
 function drawPath() {
-    ctx.beginPath();
     path.forEach(g=>{
-        ctx.moveTo(d*g.p1.x+d/2,d*g.p1.y+d/2);
-        ctx.lineTo(d*g.p2.x+d/2,d*g.p2.y+d/2);
+        ctx.beginPath();
+        ctx.strokeStyle=g.color;
+        ctx.moveTo(d*g.wall.p1.x+d/2,d*g.wall.p1.y+d/2);
+        ctx.lineTo(d*g.wall.p2.x+d/2,d*g.wall.p2.y+d/2);
+        ctx.stroke();
     })
-    ctx.stroke();
 }
 
 function mazeFull() {
@@ -69,7 +77,7 @@ function drawMaze() {
             }
             else if (maze.m[i][j]=='o') {
                 ctx.moveTo(d*i+d/2+5, d*j+d/2);
-                ctx.arc(d*i+d/2,d*j+d/2,5,0,2*Math.PI);
+                ctx.arc(d*i+d/2,d*j+d/2,d/5,0,2*Math.PI);
             }
         }
     }
@@ -98,10 +106,11 @@ function process() {
         var p1=new Point(x,y);
         x=x+d[0]; y=y+d[1];
         var p2=new Point(x,y);
-        path.push(new Wall(p1,p2));
+        path.push({ color: colors[ptrColor], wall: new Wall(p1,p2) });
         removeCrossingWall(p1,p2);
     }
     else if (dir0.length==0) {
+        ptrColor=(ptrColor+1)%colors.length;
         do {
             var o=opt.shift();
             if (o) { x=o[0]; y=o[1]; d=o[2]; }
@@ -109,20 +118,20 @@ function process() {
     }
 }
 
-var ms=0, lastFrame=0; delay=0;
+var ms=0, lastFrame=0, delay=0, speeder=10;
 var x=0, y=0;
 
 function animate() {
     ms=Date.now();
-    if (ms>lastFrame+delay) {
+    if (ms>=lastFrame+delay) {
         clearScreen();
         ctx.strokeStyle="black";
         drawGrid();
-        drawMaze();
+        //drawMaze();
         ctx.strokeStyle="red";
         drawPath();
         lastFrame=ms;
-        process();
+        for (let i=0; i<speeder; i++) process();
     }
     if (mazeFull()) {
         clearScreen();
