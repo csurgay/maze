@@ -156,6 +156,4 @@ function animate() {
     else requestAnimationFrame(animate);
 }
 
-colorTest();
-
 animate();
