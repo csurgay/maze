@@ -6,8 +6,7 @@ ctx.translate(0.5,0.5);
 ctx.lineWidth=3;
 const d=30, dx=20, dy=15;
 const maze=new Maze();
-const grid=[], opt=[], path=[], 
-    rands=[1, 1, 1, 1, 0, 2, 1, 1, 0, 2, 1, 0, 1, 0, 0, 2, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 2, 0, 1, 1, 1, 0, 0, 0, 1, 2, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 2, 2, 2, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+const grid=[], opt=[], path=[], rands=[];
 var ptrRands=0;
 
 for (let i=0; i<dx; i++) {
@@ -23,14 +22,18 @@ function clearScreen() {
 }
 
 function removeCrossingWall(p1,p2) {
-    grid.forEach(g=>function callback(v,i) {
-        if (v.p1.x==p1.x || v.p1.y==p1.y) {
+    grid.forEach((v,i)=>{
+        if (v.p1.x==p1.x && v.p1.y==p1.y && v.p2.x==p1.x && p2.x-p1.x==-1 ||
+            v.p1.x==p1.x && v.p1.y==p1.y && v.p2.y==p1.y && p2.y-p1.y==-1 ||
+            v.p1.x==p1.x+1 && v.p1.y==p1.y && v.p2.x==v.p1.x && p2.x-p1.x==1 ||
+            v.p1.x==p1.x && v.p1.y==p1.y+1 && v.p2.y==v.p1.y && p2.y-p1.y==1
+        ) {
             grid.splice(i,1);
         }
     });
 }
 
-function draw() {
+function drawGrid() {
     ctx.beginPath();
     grid.forEach(g=>{
         ctx.moveTo(d*g.p1.x,d*g.p1.y);
@@ -114,19 +117,19 @@ function animate() {
     if (ms>lastFrame+delay) {
         clearScreen();
         ctx.strokeStyle="black";
-        draw();
+        drawGrid();
         drawMaze();
         ctx.strokeStyle="red";
         drawPath();
         lastFrame=ms;
         process();
     }
-    if (mazeFull()) alert("Complete");
-    else if (opt.length==0) alert("opt emty");
-    else requestAnimationFrame(animate);
-    if (!mazeFull() && opt.length==0) {
-        console.log(rands);
+    if (mazeFull()) {
+        clearScreen();
+        ctx.strokeStyle="black";
+        drawGrid();
     }
+    else requestAnimationFrame(animate);
 }
 
 animate();
