@@ -1,5 +1,6 @@
 # maze
 Maze generator and solving game for kids
+This would be a first of a series of educational animations of kids learning algorithms and programming
 
 You can try here: https://csurgay.com/maze/
 
