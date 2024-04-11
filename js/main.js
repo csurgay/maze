@@ -11,7 +11,8 @@ canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 ctx.translate(1.5,1.5);
 ctx.lineWidth=3;
-const d=50, dx=32, dy=16;
+const d=Math.floor(Math.max(canvas.width/30, canvas.height/30));
+const dx=Math.floor(canvas.width/d), dy=Math.floor(canvas.height/d);
 var ms=0, lastFrame=0, delay=0, speeder=2;
 const maze=new Maze();
 const grid=[], opt=[], path=[], rands=[
