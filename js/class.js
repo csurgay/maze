@@ -46,7 +46,7 @@ function initAllWalls() {
 
 function clearScreen() {
     ctx.fillStyle="white";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillRect(-20,-10,canvas.width+20,canvas.height+10);
 }
 
 function removeCrossingWall(p1,p2) {
