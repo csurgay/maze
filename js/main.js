@@ -63,14 +63,15 @@ var downX, downY;
 function eventlistener(e) {
     if (e.type=="touchstart") e.preventDefault();
     if (e.type=="touchmove") e.preventDefault();
-    if (e.type=="mousedown") {
+    
+    if (state=="MOUSE" && e.type=="mousedown") {
         if (Math.hypot(e.clientX-20-d/2-xMouse,
                        e.clientY-10-d/2-yMouse)<10) {
             state="DRAG";
             downX=e.clientX; downY=e.clientY;
         }
     }    
-    if (e.type=="touchstart") {
+    if (state=="MOUSE" && e.type=="touchstart") {
         var t=e.changedTouches[0];
         console.log(t.pageX+" "+t.pageY);
         console.log((t.pageX-20-d/2)+" "+(t.pageY-10-d/2));
@@ -80,8 +81,8 @@ function eventlistener(e) {
             downX=t.pageX; downY=t.pageY;
         }
     }
-    if (e.type=="mouseup" || e.type=="touchend") {
-        state="IDLE";
+    if (state="DRAG" && (e.type=="mouseup" || e.type=="touchend")) {
+        state="MOUSE";
     }
     if (state=="DRAG" && e.type=="mousemove") {
         xMouse+=e.clientX-downX;
