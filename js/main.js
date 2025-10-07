@@ -27,14 +27,18 @@ function loadedImage() {
     if (nImg==0) init();
 }
 
+
+let escapeStep=1;
+let escapeMarkers=[];
+
 function init() {
     canvas.width=window.innerWidth; 
     canvas.height=window.innerHeight;
     ptrColor=0;
     ptrMouse=0;
     xMouse=0, yMouse=0;
-    d=Math.floor(Math.max(canvas.width/24, canvas.height/24));
-    dx=Math.floor(canvas.width/d); dy=Math.floor(canvas.height/d);
+    d=Math.floor(Math.max((canvas.width-300)/24, canvas.height/24));
+    dx=Math.floor((canvas.width-300)/d); dy=Math.floor(canvas.height/d);
     maze = new Maze();
     ms=0; lastFrame=0; delay=10; speeder=5; 
     delayMouse=15, lastMouse=0;
@@ -48,6 +52,7 @@ function init() {
     addEventListener("touchmove",eventlistener, {passive:false});
     addEventListener("touchend",eventlistener);
     initAllWalls();
+    initEscapeMarkers();
     animate();
 }
 
@@ -95,6 +100,59 @@ function eventlistener(e) {
     }
 }
 
+function initEscapeMarkers() {
+    for (let x=0; x<dx; x++) {
+        escapeMarkers.push([]);
+        for (let y=0; y<dy; y++) {
+            escapeMarkers[x].push("0");
+        }
+    }
+    escapeMarkers[0][0]="1";
+}
+
+function drawEscapeMarkers() {
+    for (let x=0; x<dx; x++) {
+        for (let y=0; y<dy; y++) {
+            if (escapeMarkers[x][y]!="0") {
+                ctx.fillStyle="black";
+                ctx.font="20px Arial";
+                ctx.textAlign="center";
+                ctx.textBaseline="middle";
+                ctx.fillText(escapeMarkers[x][y],d*x+d/2,d*y+d/2);
+            }
+        }
+    }
+}
+
+function reachable(x,y,k,l) {
+    let ret = false;
+    path.forEach( pathItem => {
+        w = pathItem.wall;
+        if (w.p1.x==x && w.p1.y==y && w.p2.x==k && w.p2.y==l) ret = true;
+        if (w.p1.x==k && w.p1.y==l && w.p2.x==x && w.p2.y==y) ret = true;
+    });
+    return ret;
+}
+
+function escapeOneStep() {
+    for (let x=0; x<dx; x++) {
+        for (let y=0; y<dy; y++) {
+            if (escapeMarkers[x][y]==""+escapeStep) {
+                for (let k=-1; k<=1; k++) {
+                    for (let l=-1; l<=1; l++) {
+                        if (x+k>=0 && x+k<dx && y+l>=0 && y+l<dy) {
+                            if (reachable(x,y,x+k,y+l) && escapeMarkers[x+k][y+l]=="0") {
+                                escapeMarkers[x+k][y+l]=""+(escapeStep+1);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    escapeStep++;
+}
+
 function animate() {
     ms=Date.now();
     if (state=="BUILD" && ms>=lastFrame+delay) {
@@ -105,9 +163,9 @@ function animate() {
         lastFrame=ms;
         for (let i=0; i<speeder; i++) process();
         if (mazeFull())
-            state="IDLE";
+            state="ESCAPE";
     }
-    else {
+    else if (state=="MOUSE") {
         clearScreen();
         ctx.strokeStyle="black";
         drawGrid();
@@ -121,6 +179,18 @@ function animate() {
             ptrMouse=(ptrMouse+1)%12;
             lastMouse=ms;
         }
+    }
+    else if (state=="IDLE") {
+        clearScreen();
+        ctx.strokeStyle="black";
+        drawGrid();
+    }
+    else if (state=="ESCAPE") {
+        clearScreen();
+        ctx.strokeStyle="black";
+        drawGrid();
+        drawEscapeMarkers();
+        escapeOneStep();
     }
     requestAnimationFrame(animate);
 }
