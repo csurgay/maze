@@ -10,7 +10,7 @@ var ptrColor;
 var d, dx, dy; // maze size parameters
 var ms, lastFrame, delay, speeder, delayMouse; // timing parameters
 var maze;
-const grid=[], opt=[], path=[];
+const grid=[], opt=[], path=[], trace=[];
 var x, y; // current pos in path
 var xMouse, yMouse; // current pos of the running mouse
 var img, nImg, ptrMouse;
@@ -29,9 +29,14 @@ function loadedImage() {
 
 
 let escapeStep=1;
-let escapeMarkers=[];
+const escapeMarkers=[];
+let lastEscapeStep=0;
 
 function init() {
+    grid.length=0, opt.length=0, path.length=0, trace.length=0;
+    escapeStep=1;
+    escapeMarkers.length=0;
+    lastEscapeStep=0;
     canvas.width=window.innerWidth; 
     canvas.height=window.innerHeight;
     ptrColor=0;
@@ -51,53 +56,66 @@ function init() {
     addEventListener("touchstart",eventlistener, {passive:false});
     addEventListener("touchmove",eventlistener, {passive:false});
     addEventListener("touchend",eventlistener);
+    addEventListener("keypress",eventlistener);
     initAllWalls();
     initEscapeMarkers();
-    animate();
 }
 
 var userPath=[new Point(0,d/2)];
-var state="BUILD";
+var state="EMPTY"; // EMPTY, BUILD, ESCAPE, MOUSE, DRAG, IDLE, TRACE
 var downX, downY;
 
 function eventlistener(e) {
-    if (e.type=="touchstart") e.preventDefault();
-    if (e.type=="touchmove") e.preventDefault();
-    
-    if (state=="MOUSE" && e.type=="mousedown") {
-        if (Math.hypot(e.clientX-20-d/2-xMouse,
-                       e.clientY-10-d/2-yMouse)<10) {
-            state="DRAG";
-            downX=e.clientX; downY=e.clientY;
-        }
-    }    
-    if (state=="MOUSE" && e.type=="touchstart") {
-        var t=e.changedTouches[0];
-        console.log(t.pageX+" "+t.pageY);
-        console.log((t.pageX-20-d/2)+" "+(t.pageY-10-d/2));
-        if (Math.hypot(t.pageX-20-d/2-xMouse,
-                       t.pageY-10-d/2-yMouse)<10) {
-            state="DRAG";
-            downX=t.pageX; downY=t.pageY;
+    if (e.type=="keypress") {
+        if (e.key==" ") {
+            if (state=="EMPTY") state="BUILD";
+            else if (state=="BUILD") state="ESCAPE";
+            else if (state=="ESCAPE") { actualTraceX=dx-2; actualTraceY=dy-2; state="TRACE" }
+            else if (state=="TRACE") state="MOUSE";
+            else if (state=="MOUSE") { init(); state="EMPTY" };
         }
     }
-    if (state="DRAG" && (e.type=="mouseup" || e.type=="touchend")) {
-        state="MOUSE";
-    }
-    if (state=="DRAG" && e.type=="mousemove") {
-        xMouse+=e.clientX-downX;
-        yMouse+=e.clientY-downY;
-        downX=e.clientX;
-        downY=e.clientY;
-        userPath.push(new Point(e.clientX-20,e.clientY-10));
-    }
-    if (state=="DRAG" && e.type=="touchmove") {
-        var t=e.changedTouches[0];
-        xMouse+=t.pageX-downX;
-        yMouse+=t.pageY-downY;
-        downX=t.pageX;
-        downY=t.pageY;
-        userPath.push(new Point(t.pageX-20,t.pageY-10));
+
+    else {
+
+        if (e.type=="touchstart") e.preventDefault();
+        if (e.type=="touchmove") e.preventDefault();
+        
+        if (state=="MOUSE" && e.type=="mousedown") {
+            if (Math.hypot(e.clientX-20-d/2-xMouse,
+                        e.clientY-10-d/2-yMouse)<10) {
+                state="DRAG";
+                downX=e.clientX; downY=e.clientY;
+            }
+        }    
+        if (state=="MOUSE" && e.type=="touchstart") {
+            var t=e.changedTouches[0];
+            console.log(t.pageX+" "+t.pageY);
+            console.log((t.pageX-20-d/2)+" "+(t.pageY-10-d/2));
+            if (Math.hypot(t.pageX-20-d/2-xMouse,
+                        t.pageY-10-d/2-yMouse)<10) {
+                state="DRAG";
+                downX=t.pageX; downY=t.pageY;
+            }
+        }
+        if (state=="DRAG" && (e.type=="mouseup" || e.type=="touchend")) {
+            state="MOUSE";
+        }
+        if (state=="DRAG" && e.type=="mousemove") {
+            xMouse+=e.clientX-downX;
+            yMouse+=e.clientY-downY;
+            downX=e.clientX;
+            downY=e.clientY;
+            userPath.push(new Point(e.clientX-20,e.clientY-10));
+        }
+        if (state=="DRAG" && e.type=="touchmove") {
+            var t=e.changedTouches[0];
+            xMouse+=t.pageX-downX;
+            yMouse+=t.pageY-downY;
+            downX=t.pageX;
+            downY=t.pageY;
+            userPath.push(new Point(t.pageX-20,t.pageY-10));
+        }
     }
 }
 
@@ -154,17 +172,41 @@ function escapeOneStep() {
     escapeStep++;
 }
 
+function traceBackStep(x,y) {
+    let ret = [0,0];
+    let actualMarker = parseInt(escapeMarkers[x][y]);
+    if (actualMarker=="1") { return ret; }
+    for (let k=-1; k<=1; k++) {
+        for (let l=-1; l<=1; l++) {
+            if (x+k>=0 && x+k<dx && y+l>=0 && y+l<dy) {
+                if (escapeMarkers[x+k][y+l]==""+(actualMarker-1)) {
+                    if (reachable(x,y,x+k,y+l)) {
+                        trace.push({wall:new Wall(new Point(x,y),new Point(x+k,y+l)), color:"green"});
+                        ret = [x+k,y+l];
+                    }
+                }
+            }
+        }
+    }
+    return ret;
+}
+
 function animate() {
     ms=Date.now();
-    if (state=="BUILD" && ms>=lastFrame+delay) {
+    if (state=="EMPTY" && ms>=lastFrame+delay) {
+        clearScreen();
+        ctx.strokeStyle="black";
+        drawGrid();
+        lastFrame=ms;
+    }
+    else if (state=="BUILD" && ms>=lastFrame+delay) {
         clearScreen();
         ctx.strokeStyle="black";
         drawGrid();
         drawPath();
         lastFrame=ms;
         for (let i=0; i<speeder; i++) process();
-        if (mazeFull())
-            state="ESCAPE";
+        //if (mazeFull()) state="ESCAPE";
     }
     else if (state=="MOUSE") {
         clearScreen();
@@ -193,7 +235,17 @@ function animate() {
         drawEscapeMarkers();
         escapeOneStep();
     }
+    else if (state=="TRACE") {
+        clearScreen();
+        ctx.strokeStyle="black";
+        drawGrid();
+        drawEscapeMarkers();
+        [actualTraceX,actualTraceY] = traceBackStep(actualTraceX,actualTraceY);
+        drawTrace();
+    }
     requestAnimationFrame(animate);
 }
 
 loadImages(1);
+
+animate();

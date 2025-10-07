@@ -80,6 +80,16 @@ function drawPath() {
     })
 }
 
+function drawTrace() {
+    trace.forEach(g=>{
+        ctx.beginPath();
+        ctx.strokeStyle=g.color;
+        ctx.moveTo(d*g.wall.p1.x+d/2,d*g.wall.p1.y+d/2);
+        ctx.lineTo(d*g.wall.p2.x+d/2,d*g.wall.p2.y+d/2);
+        ctx.stroke();
+    })
+}
+
 function drawUserPath() {
     x=0; y=d/2;
         userPath.forEach(g=>{
